@@ -1,138 +1,160 @@
 const express = require("express");
+const { MongoClient, ObjectId } = require("mongodb");
+
 const app = express();
 
-app.use(express.json());
+(async () => {
+    // Conectar com o banco de dados
+    // Pegar a minha collection
 
-// Endpoints de 'Hello'
+    const url = "mongodb://localhost:27017";
+    const dbName = "ocean_bancodados_20_10_2021";
 
-app.get("/", function (req, res) {
-    res.send("Hello, World!");
-});
+    console.info("Conectando ao banco de dados MongoDB...");
 
-app.get("/oi", function (req, res) {
-    res.send("Olá, mundo!");
-});
+    const client = await MongoClient.connect(url);
 
-// Lista de heróis
+    console.info("MongoDB conectado com sucesso.");
 
-const lista = [
-    {
-        id: 1,
-        nome: "Mulher Maravilha",
-    },
-    {
-        id: 2,
-        nome: "Capitã Marvel",
-    },
-    {
-        id: 3,
-        nome: "Homem de Ferro",
-    },
-];
+    const db = client.db(dbName);
 
-// Função de findById
+    const collection = db.collection("herois");
 
-function findById(id) {
-    const item = lista.find(item => item && item.id === id);
+    app.use(express.json());
 
-    return item;
-}
+    // Endpoints de 'Hello'
 
-// Endpoint de Read All
+    app.get("/", function (req, res) {
+        res.send("Hello, World!");
+    });
 
-app.get("/herois", function (req, res) {
-    res.send(lista.filter(Boolean));
-});
+    app.get("/oi", function (req, res) {
+        res.send("Olá, mundo!");
+    });
 
-// Endpoint de Read Single (by Id)
+    // Lista de heróis
 
-app.get("/herois/:id", function (req, res) {
-    const id = +req.params.id;
+    const lista = [
+        {
+            id: 1,
+            nome: "Mulher Maravilha",
+        },
+        {
+            id: 2,
+            nome: "Capitã Marvel",
+        },
+        {
+            id: 3,
+            nome: "Homem de Ferro",
+        },
+    ];
 
-    const item = findById(id);
+    // Função de findById
 
-    if (!item) {
-        res.status(404).send("Item não encontrado.");
+    function findById(id) {
+        const item = lista.find(item => item && item.id === id);
 
-        // Return encerra a função
-        return;
+        return item;
     }
 
-    res.send(item);
-});
+    // Endpoint de Read All
 
-// Endpoint de Create
+    app.get("/herois", async function (req, res) {
+        const resultado = await collection.find().toArray();
 
-app.post("/herois", function (req, res) {
-    const item = req.body;
+        res.send(resultado);
+    });
 
-    if (!item || !item.nome) {
-        res.status(400).send(
-            "Corpo da requisição não encontrado ou está faltando a chave 'nome'."
-        );
+    // Endpoint de Read Single (by Id)
 
-        return;
-    }
+    app.get("/herois/:id", function (req, res) {
+        const id = +req.params.id;
 
-    item.id = lista.length + 1;
+        const item = findById(id);
 
-    lista.push(item);
+        if (!item) {
+            res.status(404).send("Item não encontrado.");
 
-    res.status(201).send(item);
-});
+            // Return encerra a função
+            return;
+        }
 
-// Endpoint de Update
+        res.send(item);
+    });
 
-app.put("/herois/:id", function (req, res) {
-    const id = +req.params.id;
+    // Endpoint de Create
 
-    const itemAtual = findById(id);
+    app.post("/herois", function (req, res) {
+        const item = req.body;
 
-    if (!itemAtual) {
-        res.status(404).send("Item não encontrado.");
+        if (!item || !item.nome) {
+            res.status(400).send(
+                "Corpo da requisição não encontrado ou está faltando a chave 'nome'."
+            );
 
-        // Return encerra a função
-        return;
-    }
+            return;
+        }
 
-    const item = req.body;
+        item.id = lista.length + 1;
 
-    if (!item || !item.nome) {
-        res.status(400).send(
-            "Corpo da requisição não encontrado ou está faltando a chave 'nome'."
-        );
+        lista.push(item);
 
-        return;
-    }
+        res.status(201).send(item);
+    });
 
-    const indice = lista.indexOf(itemAtual);
+    // Endpoint de Update
 
-    item.id = itemAtual.id;
+    app.put("/herois/:id", function (req, res) {
+        const id = +req.params.id;
 
-    lista[indice] = item;
+        const itemAtual = findById(id);
 
-    res.send(item);
-});
+        if (!itemAtual) {
+            res.status(404).send("Item não encontrado.");
 
-// Endpoint de Delete
+            // Return encerra a função
+            return;
+        }
 
-app.delete("/herois/:id", function (req, res) {
-    const id = +req.params.id;
+        const item = req.body;
 
-    const item = findById(id);
+        if (!item || !item.nome) {
+            res.status(400).send(
+                "Corpo da requisição não encontrado ou está faltando a chave 'nome'."
+            );
 
-    if (!item) {
-        res.status(404).send("Item não encontrado.");
+            return;
+        }
 
-        // Return encerra a função
-        return;
-    }
+        const indice = lista.indexOf(itemAtual);
 
-    const indice = lista.indexOf(item);
+        item.id = itemAtual.id;
 
-    delete lista[indice];
+        lista[indice] = item;
 
-    res.send("Item removido com sucesso.");
-});
+        res.send(item);
+    });
 
-app.listen(3000);
+    // Endpoint de Delete
+
+    app.delete("/herois/:id", function (req, res) {
+        const id = +req.params.id;
+
+        const item = findById(id);
+
+        if (!item) {
+            res.status(404).send("Item não encontrado.");
+
+            // Return encerra a função
+            return;
+        }
+
+        const indice = lista.indexOf(item);
+
+        delete lista[indice];
+
+        res.send("Item removido com sucesso.");
+    });
+
+    app.listen(3000);
+})();
