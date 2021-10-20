@@ -84,7 +84,7 @@ const app = express();
 
     // Endpoint de Create
 
-    app.post("/herois", function (req, res) {
+    app.post("/herois", async function (req, res) {
         const item = req.body;
 
         if (!item || !item.nome) {
@@ -95,9 +95,7 @@ const app = express();
             return;
         }
 
-        item.id = lista.length + 1;
-
-        lista.push(item);
+        await collection.insertOne(item);
 
         res.status(201).send(item);
     });
